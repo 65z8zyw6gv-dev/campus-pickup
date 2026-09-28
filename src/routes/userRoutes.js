@@ -65,10 +65,25 @@ router.post(
     if (!isCampusEmail(campusEmail)) {
       throw fail('E_VALIDATION', `campusEmail 须为校园邮箱（后缀 ${EMAIL_DOMAINS.join('/')}）`)
     }
-    // 邮箱/手机查重
+    // 邮箱/手机查重：已注册则直接返回已有用户（幂等，便于前端 demo 初始化）
     const dup = findByCampusEmailOrPhone(campusEmail, phone)
     if (dup) {
-      throw fail('E_VALIDATION', '校园邮箱或手机号已注册')
+      return {
+        id: dup.id,
+        role: dup.role,
+        name: dup.name,
+        campusEmail: dup.campusEmail,
+        emailVerified: dup.emailVerified,
+        studentId: dup.studentId,
+        college: dup.college,
+        phone: dup.phone,
+        faceVerified: dup.faceVerified,
+        depositPaid: dup.depositPaid,
+        depositAmount: dup.depositAmount,
+        creditScore: dup.creditScore,
+        status: dup.status,
+        createdAt: dup.createdAt,
+      }
     }
     const user = createUser({ role, name, campusEmail, phone, studentId, college })
     persistUser(user)

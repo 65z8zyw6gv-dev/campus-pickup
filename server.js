@@ -28,7 +28,8 @@ const PORT = ENV.PORT
 app.use(cors())
 app.use(express.json())
 
-// 静态前端：public/ 托管到根路径
+// 静态前端：public/ 托管到根路径，根路径指向可交互的 app.html
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'app.html')))
 app.use(express.static(path.join(__dirname, 'public')))
 
 // API 路由

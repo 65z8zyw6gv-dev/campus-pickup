@@ -17,7 +17,8 @@ const transitions = {
   [OrderStatus.MATCHED]: [OrderStatus.PICKED_UP, OrderStatus.CANCELLED],
   [OrderStatus.PICKED_UP]: [OrderStatus.DELIVERING], // 取货后不可取消
   [OrderStatus.DELIVERING]: [OrderStatus.PENDING_CONFIRM],
-  [OrderStatus.PENDING_CONFIRM]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED],
+  [OrderStatus.PENDING_CONFIRM]: [OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.DISPUTED],
+  [OrderStatus.DISPUTED]: [OrderStatus.COMPLETED, OrderStatus.REFUNDED],
   [OrderStatus.COMPLETED]: [],
   [OrderStatus.CANCELLED]: [OrderStatus.REFUNDED],
   [OrderStatus.REFUNDED]: [],
@@ -34,7 +35,9 @@ const actionMap = {
   [OrderAction.CONFIRM]: { from: OrderStatus.PENDING_CONFIRM, to: OrderStatus.COMPLETED },
   [OrderAction.AUTO_CANCEL]: { from: OrderStatus.PENDING_MATCH, to: OrderStatus.CANCELLED },
   [OrderAction.AUTO_CONFIRM]: { from: OrderStatus.PENDING_CONFIRM, to: OrderStatus.COMPLETED },
-  [OrderAction.REFUND]: { from: OrderStatus.CANCELLED, to: OrderStatus.REFUNDED },
+  [OrderAction.COMPLAINT]: { from: [OrderStatus.PENDING_CONFIRM, OrderStatus.MATCHED, OrderStatus.PICKED_UP, OrderStatus.DELIVERING], to: OrderStatus.DISPUTED },
+  [OrderAction.ARBITRATE]: { from: OrderStatus.DISPUTED, to: OrderStatus.COMPLETED }, // 仲裁默认完成，退款走 REFUND 路径
+  [OrderAction.REFUND]: { from: [OrderStatus.CANCELLED, OrderStatus.DISPUTED], to: OrderStatus.REFUNDED },
 }
 
 /**

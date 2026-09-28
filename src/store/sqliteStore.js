@@ -97,6 +97,19 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_ledger_type ON ledger(type);
 `)
 
+// ===== 增量迁移：给已有表加新列（idempotent）=====
+// 检测列是否存在，不存在则 ALTER TABLE 加列
+function hasColumn(table, col) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all()
+  return cols.some((c) => c.name === col)
+}
+if (!hasColumn('orders', 'complaint')) {
+  db.exec('ALTER TABLE orders ADD COLUMN complaint TEXT')
+}
+if (!hasColumn('orders', 'arbitration')) {
+  db.exec('ALTER TABLE orders ADD COLUMN arbitration TEXT')
+}
+
 // ===== User 序列化辅助 =====
 export function rowToUser(r) {
   if (!r) return null
@@ -188,6 +201,8 @@ export function rowToOrder(r) {
     paidAt: r.paid_at,
     pendingConfirmAt: r.pending_confirm_at,
     refundAmount: r.refund_amount,
+    complaint: r.complaint ? JSON.parse(r.complaint) : null,
+    arbitration: r.arbitration ? JSON.parse(r.arbitration) : null,
     rating: r.rating ? JSON.parse(r.rating) : null,
     timeline: r.timeline ? JSON.parse(r.timeline) : [],
     createdAt: r.created_at,
@@ -217,6 +232,8 @@ export function orderToRow(o) {
     paid_at: o.paidAt,
     pending_confirm_at: o.pendingConfirmAt,
     refund_amount: o.refundAmount,
+    complaint: o.complaint ? JSON.stringify(o.complaint) : null,
+    arbitration: o.arbitration ? JSON.stringify(o.arbitration) : null,
     rating: o.rating ? JSON.stringify(o.rating) : null,
     timeline: JSON.stringify(o.timeline || []),
     created_at: o.createdAt,
@@ -228,11 +245,11 @@ const insertOrderStmt = db.prepare(`
   (id, type, customer_id, picker_id, pickup_location, pickup_code, delivery_location,
    expected_time, note, status, amount, picker_fee, platform_fee, pickup_photo,
    delivery_photo, face_verified_at_pickup, pickup_code_verified, payment_mode,
-   paid_at, pending_confirm_at, refund_amount, rating, timeline, created_at)
+   paid_at, pending_confirm_at, refund_amount, complaint, arbitration, rating, timeline, created_at)
   VALUES (@id, @type, @customer_id, @picker_id, @pickup_location, @pickup_code, @delivery_location,
    @expected_time, @note, @status, @amount, @picker_fee, @platform_fee, @pickup_photo,
    @delivery_photo, @face_verified_at_pickup, @pickup_code_verified, @payment_mode,
-   @paid_at, @pending_confirm_at, @refund_amount, @rating, @timeline, @created_at)
+   @paid_at, @pending_confirm_at, @refund_amount, @complaint, @arbitration, @rating, @timeline, @created_at)
 `)
 
 export function saveOrderRow(o) {

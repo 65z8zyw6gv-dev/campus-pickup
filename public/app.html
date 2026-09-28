@@ -161,6 +161,7 @@ const api = {
   confirm: (id) => call('POST', `/orders/${id}/confirm`),
   rate: (id, b) => call('POST', `/orders/${id}/rate`, b),
   cancel: (id) => call('POST', `/orders/${id}/cancel`),
+  complaint: (id, b) => call('POST', `/orders/${id}/complaint`, b),
   getOrder: (id) => call('GET', `/orders/${id}`),
   listOrders: () => call('GET', '/orders'),
   getUser: (id) => call('GET', `/users/${id}`),
@@ -201,9 +202,9 @@ async function initDemoUsers() {
     }
   }
   // 注册 customer
-  const c = await api.register({ role:'customer', name:'张三', studentId:'C001', phone:'13800000001' });
+  const c = await api.register({ role:'customer', name:'张三', studentId:'C001', phone:'13800000001', campusEmail:'zhangsan@edu.cn' });
   // 注册 picker
-  const p = await api.register({ role:'picker', name:'李四', studentId:'P001', phone:'13800000002' });
+  const p = await api.register({ role:'picker', name:'李四', studentId:'P001', phone:'13800000002', campusEmail:'lisi@edu.cn' });
   // picker 走准入：人脸 → 保证金 → 签到
   await api.verifyFace(p.id);
   await api.payDeposit(p.id);
@@ -265,32 +266,45 @@ function renderRole() {
   document.getElementById('subBar').textContent = `当前身份：${s.role==='picker'?'帮取人':'顾客'} · ${uid || '未初始化'}`;
 }
 
-/* ===== 渲染：首页订单列表 =====
-   顾客视角：看我发的单（可取消/支付）
-   帮取人视角：看所有可接单（待接/已接）
+/* ===== 渲染：首页 =====
+   顾客视角：快速发单入口 + 我的近期订单
+   帮取人视角：可接订单 + 进行中订单
 */
 async function renderHome() {
   const list = document.getElementById('home-list');
   list.innerHTML = '<div class="empty">加载中...</div>';
   const data = await safe(() => api.listOrders(), '拉取订单失败');
   if (!data) return;
-  let orders = data.orders || data || [];
+  let allOrders = data.list || data.orders || data || [];
   const s = loadState();
   const uid = currentUserId();
-  // 角色过滤
+
   if (s.role === 'customer') {
-    orders = orders.filter(o => o.customerId === uid);
+    // 顾客首页：发单入口 + 我的订单
+    const myOrders = allOrders.filter(o => o.customerId === uid);
+    const active = myOrders.filter(o => !['COMPLETED','CANCELLED','REFUNDED'].includes(o.status));
+    const done = myOrders.filter(o => ['COMPLETED','CANCELLED','REFUNDED'].includes(o.status));
+    list.innerHTML = `
+      <div class="card" style="cursor:pointer;border:2px solid var(--brand);text-align:center;padding:20px" onclick="location.hash='#/publish'">
+        <div style="font-size:28px;margin-bottom:4px">+</div>
+        <div style="font-size:15px;font-weight:600;color:var(--brand-600)">发布代取需求</div>
+        <div style="font-size:12px;color:var(--text-sub);margin-top:2px">外卖/快递/其他 · ¥1.5 起</div>
+      </div>
+      ${active.length ? `<div style="font-size:13px;color:var(--text-muted);font-weight:600;margin:14px 0 6px">进行中</div>${active.map(o => orderCardHTML(o)).join('')}` : ''}
+      ${done.length ? `<div style="font-size:13px;color:var(--text-muted);font-weight:600;margin:14px 0 6px">已完成</div>${done.map(o => orderCardHTML(o)).join('')}` : ''}
+      ${!myOrders.length ? '<div class="empty">还没有订单，点击上方按钮发单</div>' : ''}
+    `;
   } else {
-    // picker：显示待接单 + 自己已接的
-    orders = orders.filter(o => o.status === 'PENDING_ACCEPT' || o.pickerId === uid);
+    // 帮取人首页：可接订单 + 我的进行中
+    const available = allOrders.filter(o => o.status === 'PENDING_ACCEPT');
+    const mine = allOrders.filter(o => o.pickerId === uid && !['COMPLETED','CANCELLED','REFUNDED'].includes(o.status));
+    list.innerHTML = `
+      ${available.length ? `<div style="font-size:13px;color:var(--text-muted);font-weight:600;margin:0 0 6px">可接订单（${available.length}）</div>${available.map(o => orderCardHTML(o)).join('')}` : '<div class="empty">暂无可接订单</div>'}
+      ${mine.length ? `<div style="font-size:13px;color:var(--text-muted);font-weight:600;margin:14px 0 6px">进行中</div>${mine.map(o => orderCardHTML(o)).join('')}` : ''}
+    `;
   }
-  if (!orders.length) {
-    list.innerHTML = `<div class="empty">${s.role==='customer'?'还没发过单 → 点"发单"开始':'暂无可接订单'}</div>`;
-    return;
-  }
-  list.innerHTML = orders.map(o => orderCardHTML(o)).join('');
   // 绑定点击
-  list.querySelectorAll('.card').forEach(c => {
+  list.querySelectorAll('.card[data-id]').forEach(c => {
     c.onclick = () => location.hash = `#/detail/${c.dataset.id}`;
   });
 }
@@ -301,7 +315,7 @@ async function renderOrders() {
   list.innerHTML = '<div class="empty">加载中...</div>';
   const data = await safe(() => api.listOrders(), '拉取订单失败');
   if (!data) return;
-  let orders = data.orders || data || [];
+  let orders = data.list || data.orders || data || [];
   const uid = currentUserId();
   const s = loadState();
   // 我的 = 我发的（顾客）或 我接的（帮取人）
@@ -338,8 +352,44 @@ function statusText(s) {
   return {
     PENDING_PAYMENT:'待支付', PENDING_MATCH:'待接单', MATCHED:'已接单',
     PICKED_UP:'已取货', DELIVERING:'配送中', PENDING_CONFIRM:'待确认',
-    COMPLETED:'已完成', CANCELLED:'已取消', REFUNDED:'已退款'
+    DISPUTED:'争议中', COMPLETED:'已完成', CANCELLED:'已取消', REFUNDED:'已退款'
   }[s] || s;
+}
+
+// 资金托管状态文案
+function escrowStatus(o) {
+  switch (o.status) {
+    case 'PENDING_PAYMENT': return '未支付';
+    case 'PENDING_MATCH': return '已托管到平台，等待帮取人接单';
+    case 'MATCHED':
+    case 'PICKED_UP':
+    case 'DELIVERING': return '已托管到平台，服务进行中';
+    case 'PENDING_CONFIRM': return '已托管到平台，等待顾客确认';
+    case 'DISPUTED': return '已冻结，等待平台仲裁';
+    case 'COMPLETED': return '已分账：帮取人 ¥1.2 + 平台 ¥0.3';
+    case 'CANCELLED':
+    case 'REFUNDED': return o.refundAmount > 0 ? `已退款 ¥${o.refundAmount}` : '已退款';
+    default: return '—';
+  }
+}
+
+// 超时倒计时
+function countdownText(o) {
+  if (o.status === 'PENDING_MATCH' && o.paidAt) {
+    const remain = 10 * 60 * 1000 - (Date.now() - new Date(o.paidAt).getTime());
+    if (remain <= 0) return '即将自动取消';
+    const m = Math.floor(remain / 60000);
+    const s = Math.floor((remain % 60000) / 1000);
+    return `自动取消倒计时 ${m}分${s}秒`;
+  }
+  if (o.status === 'PENDING_CONFIRM' && o.pendingConfirmAt) {
+    const remain = 24 * 60 * 60 * 1000 - (Date.now() - new Date(o.pendingConfirmAt).getTime());
+    if (remain <= 0) return '即将自动确认';
+    const h = Math.floor(remain / 3600000);
+    const m = Math.floor((remain % 3600000) / 60000);
+    return `自动确认倒计时 ${h}时${m}分`;
+  }
+  return null;
 }
 
 /* ===== 渲染：订单详情（状态机驱动按钮）===== */
@@ -353,6 +403,7 @@ async function renderDetail(id) {
   const isPicker = s.role === 'picker' && (!o.pickerId || o.pickerId === currentUserId());
 
   const actions = [];
+  const canComplain = ['MATCHED','PICKED_UP','DELIVERING','PENDING_CONFIRM'].includes(o.status) && (isCustomer || isPicker);
   // 顾客视角
   if (isCustomer) {
     if (o.status === 'PENDING_PAYMENT') actions.push({label:'支付 ¥1.5', cls:'primary', fn:()=>doAction(id,'pay')});
@@ -367,6 +418,45 @@ async function renderDetail(id) {
     if (o.status === 'PICKED_UP') actions.push({label:'开始配送', cls:'primary', fn:()=>doAction(id,'deliver')});
     if (o.status === 'DELIVERING') actions.push({label:'送达', cls:'primary', fn:()=>doAction(id,'arrive')});
   }
+  // 投诉按钮
+  if (canComplain) actions.push({label:'发起投诉', cls:'danger', fn:()=>doComplaint(id)});
+
+  // 资金托管 + 倒计时
+  const escrow = escrowStatus(o);
+  const countdown = countdownText(o);
+
+  // 凭证照片
+  const photoSection = (o.pickupPhoto || o.deliveryPhoto) ? `
+    <div class="card" style="cursor:default">
+      <h3 style="font-size:13px;color:var(--text-muted)">服务凭证</h3>
+      ${o.pickupPhoto ? `<div style="margin:6px 0"><div style="font-size:12px;color:var(--text-muted)">取货凭证</div><div style="font-size:12px">${o.pickupPhoto.startsWith('data:') ? `<img src="${o.pickupPhoto}" style="max-width:100%;border-radius:8px;margin-top:4px" />` : o.pickupPhoto}</div></div>` : ''}
+      ${o.deliveryPhoto ? `<div style="margin:6px 0"><div style="font-size:12px;color:var(--text-muted)">送达凭证</div><div style="font-size:12px">${o.deliveryPhoto.startsWith('data:') ? `<img src="${o.deliveryPhoto}" style="max-width:100%;border-radius:8px;margin-top:4px" />` : o.deliveryPhoto}</div></div>` : ''}
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">人脸核验：${o.faceVerifiedAtPickup ? '✓ 通过' : '未核验'} · 取件码：${o.pickupCodeVerified ? '✓ 已核销' : '未核销'}</div>
+    </div>
+  ` : '';
+
+  // 投诉信息
+  const complaintSection = o.complaint ? `
+    <div class="card" style="cursor:default;border-color:var(--danger)">
+      <h3 style="font-size:13px;color:var(--danger)">投诉信息</h3>
+      <div style="font-size:13px">投诉人：${o.complaint.raisedBy}</div>
+      <div style="font-size:13px">原因：${o.complaint.reason}</div>
+      ${o.complaint.description ? `<div style="font-size:13px;color:var(--text-muted);margin-top:4px">${o.complaint.description}</div>` : ''}
+      ${o.complaint.evidence ? `<div style="font-size:12px;color:var(--text-sub);margin-top:4px">证据：${o.complaint.evidence}</div>` : ''}
+    </div>
+  ` : '';
+
+  // 仲裁结果
+  const arbitrationSection = o.arbitration ? `
+    <div class="card" style="cursor:default;border-color:var(--brand)">
+      <h3 style="font-size:13px;color:var(--brand-600)">仲裁结果</h3>
+      <div style="font-size:13px">裁决：${o.arbitration.decision === 'refund_customer' ? '退款给顾客' : o.arbitration.decision === 'reject' ? '驳回投诉' : '部分退款'}</div>
+      <div style="font-size:13px">保证金扣罚：¥${o.arbitration.deduction || 0}</div>
+      ${o.arbitration.refundAmount ? `<div style="font-size:13px">退款金额：¥${o.arbitration.refundAmount}</div>` : ''}
+      ${o.arbitration.frozen ? `<div style="font-size:13px;color:var(--danger)">帮取人已被冻结</div>` : ''}
+      <div style="font-size:11px;color:var(--text-sub);margin-top:4px">仲裁时间：${new Date(o.arbitration.arbitratedAt).toLocaleString()}</div>
+    </div>
+  ` : '';
 
   // 时间线
   const timeline = (o.timeline || []).map(t => `<div class="step"><b>${statusText(t.to)}</b> · ${new Date(t.at).toLocaleTimeString()}</div>`).join('');
@@ -383,17 +473,35 @@ async function renderDetail(id) {
       </div>
     </div>
     <div class="card" style="cursor:default">
-      <h3 style="font-size:13px;color:var(--text-muted)">金额</h3>
-      <div class="amount"><span>订单金额</span><span>¥1.50</span></div>
-      <div class="amount"><span>帮取人</span><span>¥1.20</span></div>
-      <div class="amount"><span>平台</span><span>¥0.30</span></div>
+      <h3 style="font-size:13px;color:var(--text-muted)">资金托管</h3>
+      <div style="font-size:14px;font-weight:600;color:var(--brand-600);margin:4px 0">${escrow}</div>
+      ${countdown ? `<div style="font-size:12px;color:var(--warn);margin-top:4px">⏱ ${countdown}</div>` : ''}
+      <div style="margin-top:8px">
+        <div class="amount"><span>订单金额</span><span>¥1.50</span></div>
+        <div class="amount"><span>帮取人佣金</span><span>¥1.20</span></div>
+        <div class="amount"><span>平台服务</span><span>¥0.30</span></div>
+      </div>
     </div>
+    ${photoSection}
+    ${complaintSection}
+    ${arbitrationSection}
     ${timeline ? `<div class="card" style="cursor:default"><h3 style="font-size:13px;color:var(--text-muted)">流转时间线</h3><div class="timeline">${timeline}</div></div>` : ''}
     ${actions.length ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${actions.map((a,i)=>`<button class="btn ${a.cls} block" onclick="window._act[${i}]()">${a.label}</button>`).join('')}</div>` : ''}
     <div style="margin-top:12px"><button class="btn small" onclick="location.hash='#/home'">返回</button></div>
   `;
   // 把 actions 挂到全局
   window._act = actions.map(a => a.fn);
+}
+
+async function doComplaint(id) {
+  const reason = prompt('请输入投诉原因：');
+  if (!reason) return;
+  const description = prompt('详细描述（选填）：') || '';
+  await safe(async () => {
+    await api.complaint(id, { raisedBy: currentUserId(), reason, description });
+    toast('投诉已提交，订单进入争议状态');
+    await renderDetail(id);
+  }, '投诉失败');
 }
 
 async function doAction(id, action) {

@@ -8,6 +8,7 @@ export const OrderStatus = {
   PICKED_UP: 'PICKED_UP', // 已取货
   DELIVERING: 'DELIVERING', // 送达中
   PENDING_CONFIRM: 'PENDING_CONFIRM', // 待确认收货
+  DISPUTED: 'DISPUTED', // 争议中（已发起投诉，待仲裁）
   COMPLETED: 'COMPLETED', // 已完成
   CANCELLED: 'CANCELLED', // 已取消
   REFUNDED: 'REFUNDED', // 已退款
@@ -60,5 +61,7 @@ export const OrderAction = {
   CONFIRM: 'CONFIRM', // 确认收货
   AUTO_CANCEL: 'AUTO_CANCEL', // 超时自动取消
   AUTO_CONFIRM: 'AUTO_CONFIRM', // 超时自动确认
+  COMPLAINT: 'COMPLAINT', // 发起投诉 -> DISPUTED
+  ARBITRATE: 'ARBITRATE', // 仲裁裁决 -> COMPLETED / REFUNDED
   REFUND: 'REFUND', // 退款（CANCELLED -> REFUNDED）
 }

@@ -2,8 +2,8 @@
 // 契约 5.3 arbitrate / 5.4 getStats + /deposits + /pickers
 // 统一返回 { ok, data } / { ok:false, error:{code,message} }
 import { Router } from 'express'
-import { orders, users, deposits, ledger, listPickers, getOrder, getUser, persistUser, persistLedger } from '../store/memoryStore.js'
-import { OrderStatus, OrderAction, CreditAction } from '../models/constants.js'
+import { orders, users, deposits, ledger, listPickers, getOrder, getUser, persistUser, persistOrder, persistLedger } from '../store/memoryStore.js'
+import { OrderStatus, OrderAction, CreditAction, UserStatus } from '../models/constants.js'
 import { getTier, addCredit } from '../services/creditService.js'
 import { refund, splitPayment, getDepositPool } from '../services/paymentService.js'
 import { transition } from '../stateMachine/orderStateMachine.js'
@@ -117,6 +117,7 @@ router.post(
     const arbitratedAt = new Date().toISOString()
     let refundAmount
     let creditDelta = 0
+    let frozen = false
 
     // 投诉成立 → 调 M4.addCredit(COMPLAINT)，-1.0
     if (complaintEstablished && order.pickerId) {
@@ -129,22 +130,27 @@ router.post(
       const picker = getUser(order.pickerId)
       const before = picker.depositAmount
       picker.depositAmount = Math.max(0, picker.depositAmount - Number(deduction))
-      console.log(`[仲裁 mock] 帮取人 ${picker.id} 扣保证金 ¥${deduction}（${before} → ${picker.depositAmount}）`)
+      // 保证金扣到 0 → 自动冻结帮取人
+      if (picker.depositAmount <= 0) {
+        picker.depositPaid = false
+        picker.status = UserStatus.FROZEN
+        frozen = true
+      }
+      console.log(`[仲裁] 帮取人 ${picker.id} 扣保证金 ¥${deduction}（${before} → ${picker.depositAmount}）${frozen ? '已冻结' : ''}`)
       persistUser(picker)
       persistLedger({
         type: 'deposit_deduct',
         orderId: order.id,
+        userId: picker.id,
         amount: Number(deduction),
-        detail: { pickerId: picker.id, before, after: picker.depositAmount },
+        detail: { pickerId: picker.id, before, after: picker.depositAmount, frozen },
         at: arbitratedAt,
       })
     }
 
-    // 退款给顾客：仲裁是终局裁决，不走状态机，直接退订单总额
-    // （COMPLETED 已分账的订单也支持仲裁退款，钱从已分账资金退回）
+    // 退款给顾客：仲裁是终局裁决
     if (decision === 'refund_customer') {
       refundAmount = order.amount
-      console.log(`[仲裁 mock] 订单 ${order.id} 仲裁退款顾客 ¥${refundAmount}`)
       persistLedger({
         type: 'refund',
         orderId: order.id,
@@ -152,14 +158,38 @@ router.post(
         detail: { reason: '仲裁退款', stage: order.status },
         at: arbitratedAt,
       })
+      // 状态推进：DISPUTED → REFUNDED
+      if (order.status === OrderStatus.DISPUTED) {
+        transition(order, OrderAction.REFUND)
+      }
+      order.refundAmount = refundAmount
+    } else {
+      // reject / split → 维持或完成
+      if (order.status === OrderStatus.DISPUTED) {
+        transition(order, OrderAction.ARBITRATE)
+      }
     }
+
+    // 存仲裁结果
+    order.arbitration = {
+      decision,
+      deduction: Number(deduction),
+      complaintEstablished,
+      refundAmount,
+      creditDelta,
+      frozen,
+      arbitratedAt,
+    }
+    persistOrder(order)
 
     return {
       orderId: order.id,
+      status: order.status,
       decision,
       deduction: Number(deduction),
       refundAmount,
       creditDelta,
+      frozen,
       arbitratedAt,
     }
   })

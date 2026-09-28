@@ -41,6 +41,8 @@ export function createOrder(p) {
     faceVerifiedAtPickup: false, // 取货时人脸核验
     pickupCodeVerified: false, // 取件码核销
     refundAmount: 0, // 退款金额
+    complaint: null, // { raisedBy, reason, description, evidence, raisedAt } 投诉信息
+    arbitration: null, // { decision, deduction, complaintEstablished, arbitratedAt } 仲裁结果
     rating: null, // { customerToPicker, pickerToCustomer }
     timeline: [
       { at: now, action: 'CREATE', from: null, to: OrderStatus.PENDING_PAYMENT },

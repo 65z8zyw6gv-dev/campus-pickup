@@ -195,6 +195,37 @@ router.post(
   })
 )
 
+// ===== 投诉接口（POST /:id/complaint）发起投诉 → DISPUTED =====
+router.post(
+  '/:id/complaint',
+  wrap((req) => {
+    const order = getOrder(req.params.id)
+    const { raisedBy, reason, description, evidence } = req.body || {}
+    if (!raisedBy) throw fail('E_VALIDATION', '缺少 raisedBy（投诉人 user id）')
+    if (!reason) throw fail('E_VALIDATION', '缺少 reason（投诉原因）')
+    // 只有订单参与方才能投诉
+    if (raisedBy !== order.customerId && raisedBy !== order.pickerId) {
+      throw fail('E_ACCESS', '只有订单参与方才能发起投诉')
+    }
+    // 记录投诉信息
+    order.complaint = {
+      raisedBy,
+      reason,
+      description: description || '',
+      evidence: evidence || null,
+      raisedAt: new Date().toISOString(),
+    }
+    // 状态转 DISPUTED
+    transition(order, OrderAction.COMPLAINT, { raisedBy, reason })
+    persistOrder(order)
+    return {
+      orderId: order.id,
+      status: order.status,
+      complaint: order.complaint,
+    }
+  })
+)
+
 // ===== 契约 2.x GET /:id 订单详情（含 validActions 驱动前端按钮）=====
 router.get(
   '/:id',
