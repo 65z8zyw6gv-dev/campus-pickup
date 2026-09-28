@@ -6,7 +6,7 @@
 //   - 保证金默认 ¥20（env 配置，降低学生心理门槛）
 //   - identity 准入关改为"邮箱已激活"
 import { Router } from 'express'
-import { users, requireUser, findByCampusEmailOrPhone, deposits } from '../store/memoryStore.js'
+import { users, requireUser, findByCampusEmailOrPhone, deposits, persistUser, persistDeposit } from '../store/memoryStore.js'
 import { createUser, isPickerReady, isFrozen } from '../models/User.js'
 import { Role } from '../models/constants.js'
 import { getTier, getCreditDetail } from '../services/creditService.js'
@@ -71,7 +71,7 @@ router.post(
       throw fail('E_VALIDATION', '校园邮箱或手机号已注册')
     }
     const user = createUser({ role, name, campusEmail, phone, studentId, college })
-    users.set(user.id, user)
+    persistUser(user)
     // 返回契约规定的字段（不含内部统计字段如 goodCount，保持对外精简）
     return {
       id: user.id,
@@ -107,6 +107,7 @@ router.post(
     }
     // mock：不校验 code，直接通过；真实场景需校验邮件下发的 6 位码
     user.emailVerified = true
+    persistUser(user)
     const verifiedAt = new Date().toISOString()
     return { userId: user.id, emailVerified: true, verifiedAt }
   })
@@ -122,6 +123,7 @@ router.post(
     }
     // 注：mock 模式直接标记通过；真实场景为学生证照片审核通过，不再是严格的活体识别
     user.faceVerified = true
+    persistUser(user)
     const verifiedAt = new Date().toISOString()
     return { userId: user.id, faceVerified: true, verifiedAt }
   })
@@ -156,7 +158,8 @@ router.post(
       status: 'paid',
       createdAt: paidAt,
     }
-    deposits.set(dep.id, dep)
+    persistDeposit(dep)
+    persistUser(user)
     return { userId: user.id, depositPaid: true, depositAmount: amount, paidAt }
   })
 )

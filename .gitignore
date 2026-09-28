@@ -4,3 +4,9 @@ node_modules/
 .DS_Store
 coverage/
 .nyc_output/
+
+# SQLite 持久化数据（不进 git）
+data/
+*.db
+*.db-wal
+*.db-shm

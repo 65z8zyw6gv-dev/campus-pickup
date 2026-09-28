@@ -7,7 +7,7 @@
 // 全部为 mock，仅 console.log 打印，不接真实支付通道。
 // 契约 3.1/3.2/3.3：抛 E_PAYMENT/E_STATE，返回结构含 paid/total/splitAt/ledger 等
 import { OrderStatus } from '../models/constants.js'
-import { getOrder, getUser, ledger, deposits, listPickers } from '../store/memoryStore.js'
+import { getOrder, getUser, ledger, deposits, listPickers, persistOrder, persistLedger } from '../store/memoryStore.js'
 import { transition } from '../stateMachine/orderStateMachine.js'
 import { OrderAction } from '../models/constants.js'
 
@@ -44,7 +44,8 @@ export function payOrder(orderId) {
   transition(order, OrderAction.PAY, { amount: PICKER_FEE + PLATFORM_FEE })
   order.paidAt = now
   order.paymentMode = 'split_scan'
-  ledger.push({
+  persistOrder(order)
+  persistLedger({
     type: 'pay',
     orderId,
     amount: PICKER_FEE + PLATFORM_FEE,
@@ -80,7 +81,7 @@ export function splitPayment(orderId) {
     { to: 'picker', amount: PICKER_FEE, payeeId: order.pickerId, mode: 'direct_scan' },
     { to: 'platform', amount: PLATFORM_FEE, mode: 'direct_scan' },
   ]
-  ledger.push({
+  persistLedger({
     type: 'split',
     orderId,
     amount: PICKER_FEE + PLATFORM_FEE,
@@ -141,7 +142,7 @@ export function refund(orderId) {
 
   order.refundAmount = refundAmount
   const refundedAt = new Date().toISOString()
-  ledger.push({
+  persistLedger({
     type: 'refund',
     orderId,
     amount: refundAmount,
@@ -152,6 +153,7 @@ export function refund(orderId) {
   // 若订单已取消，转 REFUNDED
   if (order.status === OrderStatus.CANCELLED) {
     transition(order, OrderAction.REFUND, { refund: refundAmount })
+    persistOrder(order)
   }
   return { orderId, refundAmount, reason, refundedAt, manualRefundNote }
 }

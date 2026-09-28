@@ -2,7 +2,7 @@
 // 契约 2.1-2.4 + HTTP 端点表 11 个
 // 统一返回 { ok, data } / { ok:false, error:{code,message} }
 import { Router } from 'express'
-import { orders, getOrder, getUser, requireUser } from '../store/memoryStore.js'
+import { orders, getOrder, getUser, requireUser, persistOrder } from '../store/memoryStore.js'
 import { createOrder } from '../models/Order.js'
 import { OrderStatus, OrderAction, CreditAction } from '../models/constants.js'
 import { transition, getValidActions } from '../stateMachine/orderStateMachine.js'
@@ -42,6 +42,7 @@ router.post(
     if (customerId) requireUser(customerId) // 不存在抛 E_NOTFOUND
     const order = createOrder({ type, customerId, pickupLocation, pickupCode, deliveryLocation, expectedTime, note })
     orders.set(order.id, order)
+    persistOrder(order)
     return {
       id: order.id,
       status: order.status,
@@ -73,6 +74,7 @@ router.post(
   wrap((req) => {
     const order = getOrder(req.params.id)
     transition(order, OrderAction.CANCEL)
+    persistOrder(order)
     const refundResult = refund(order.id)
     return { orderId: order.id, status: order.status, refund: refundResult }
   })
@@ -93,6 +95,7 @@ router.post(
     if (!risk.passed) throw fail('E_RISK', `帮取人风控拦截：${risk.warnings.join('；')}`)
     order.pickerId = pickerId
     transition(order, OrderAction.ACCEPT, { pickerId })
+    persistOrder(order)
     return { orderId: order.id, status: order.status, pickerId }
   })
 )
@@ -111,6 +114,7 @@ router.post(
     order.faceVerifiedAtPickup = !!faceVerified
     order.pickupCodeVerified = pickupCode === order.pickupCode
     transition(order, OrderAction.PICKUP, { pickupPhoto, faceVerified, pickupCode })
+    persistOrder(order)
     return { orderId: order.id, status: order.status, checks: risk.checks }
   })
 )
@@ -121,6 +125,7 @@ router.post(
   wrap((req) => {
     const order = getOrder(req.params.id)
     transition(order, OrderAction.DELIVER)
+    persistOrder(order)
     return { orderId: order.id, status: order.status }
   })
 )
@@ -134,6 +139,7 @@ router.post(
     order.deliveryPhoto = deliveryPhoto || null
     transition(order, OrderAction.ARRIVE, { deliveryPhoto })
     order.pendingConfirmAt = new Date().toISOString()
+    persistOrder(order)
     return { orderId: order.id, status: order.status }
   })
 )
@@ -153,6 +159,7 @@ router.post(
       picker.totalOrders = (picker.totalOrders || 0) + 1
       credit = addCredit(order.pickerId, CreditAction.COMPLETE, { orderId: order.id })
     }
+    persistOrder(order)
     return { orderId: order.id, status: order.status, split, credit }
   })
 )
@@ -183,6 +190,7 @@ router.post(
       // 更新好评率
       picker.goodRate = picker.totalOrders > 0 ? picker.goodCount / picker.totalOrders : 0
     }
+    persistOrder(order)
     return { orderId: order.id, rating: order.rating, creditChanges: changes }
   })
 )

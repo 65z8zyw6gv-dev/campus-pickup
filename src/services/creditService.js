@@ -1,7 +1,7 @@
 // 信誉分服务：完成单+0.5、好评+0.5、准时+0.1、差评-0.5、投诉-1.0、满分10封顶、四档等级
 // 契约 4.1：未知动作抛 E_CREDIT（getUser 已抛 E_NOTFOUND）
 import { CreditAction, CreditTier } from '../models/constants.js'
-import { getUser } from '../store/memoryStore.js'
+import { getUser, persistUser } from '../store/memoryStore.js'
 
 // 抛带 code 的错误
 const fail = (code, message) => {
@@ -64,6 +64,7 @@ export function addCredit(userId, action, ctx = {}) {
     after,
     orderId: ctx.orderId || null,
   })
+  persistUser(user)
   return { before, delta, after, tier: getTier(after) }
 }
 

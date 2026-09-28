@@ -2,7 +2,7 @@
 // 契约 5.3 arbitrate / 5.4 getStats + /deposits + /pickers
 // 统一返回 { ok, data } / { ok:false, error:{code,message} }
 import { Router } from 'express'
-import { orders, users, deposits, ledger, listPickers, getOrder, getUser } from '../store/memoryStore.js'
+import { orders, users, deposits, ledger, listPickers, getOrder, getUser, persistUser, persistLedger } from '../store/memoryStore.js'
 import { OrderStatus, OrderAction, CreditAction } from '../models/constants.js'
 import { getTier, addCredit } from '../services/creditService.js'
 import { refund, splitPayment, getDepositPool } from '../services/paymentService.js'
@@ -130,7 +130,8 @@ router.post(
       const before = picker.depositAmount
       picker.depositAmount = Math.max(0, picker.depositAmount - Number(deduction))
       console.log(`[仲裁 mock] 帮取人 ${picker.id} 扣保证金 ¥${deduction}（${before} → ${picker.depositAmount}）`)
-      ledger.push({
+      persistUser(picker)
+      persistLedger({
         type: 'deposit_deduct',
         orderId: order.id,
         amount: Number(deduction),
@@ -144,7 +145,7 @@ router.post(
     if (decision === 'refund_customer') {
       refundAmount = order.amount
       console.log(`[仲裁 mock] 订单 ${order.id} 仲裁退款顾客 ¥${refundAmount}`)
-      ledger.push({
+      persistLedger({
         type: 'refund',
         orderId: order.id,
         amount: refundAmount,
