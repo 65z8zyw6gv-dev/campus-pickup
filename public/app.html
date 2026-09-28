@@ -3,128 +3,126 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>校送 · H5 骨架</title>
+<title>校送 · 演示版</title>
 <style>
   :root{
-    --brand:#00b964; --brand-600:#00a258;
-    --bg:#f4f6f8; --surface:#ffffff;
-    --border:#e4e7eb; --text:#1f2329; --text-muted:#646a73;
-    --radius:8px; --radius-card:12px;
+    --brand:#00b964; --brand-600:#00a258; --brand-50:#e8f8f0;
+    --warn:#ffb300; --warn-50:#fff8e1;
+    --info:#4d7cff; --info-50:#eef3ff;
+    --danger:#f5483b; --danger-50:#fdeef0;
+    --bg:#f4f6f8; --surface:#ffffff; --surface-muted:#f6f8fa;
+    --border:#e4e7eb; --border-strong:#c9ced4;
+    --text:#1f2329; --text-muted:#646a73; --text-sub:#8a8f99;
+    --radius:8px; --radius-card:12px; --radius-full:999px;
     --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-  /* 手机框架：模拟移动端，居中限宽 */
   #app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:64px}
   /* 顶部栏 */
-  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;font-weight:700;font-size:17px;position:sticky;top:0;z-index:10}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:10}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .topbar h1{margin:0;font-size:17px;font-weight:700}
+  .role-switch{display:flex;gap:6px;font-size:12px}
+  .role-pill{padding:4px 10px;border-radius:var(--radius-full);background:var(--surface-muted);border:1px solid var(--border);cursor:pointer;color:var(--text-muted)}
+  .role-pill.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .sub-bar{padding:6px 16px;font-size:12px;color:var(--text-muted);background:var(--surface-muted);border-bottom:1px solid var(--border)}
   /* 内容区 */
   .view{padding:16px;display:none}
   .view.active{display:block}
-  /* 占位卡 */
-  .placeholder{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius-card);padding:32px 16px;text-align:center;color:var(--text-muted)}
-  .placeholder .tag{display:inline-block;background:#fff8e1;color:#b07b00;font-size:11px;padding:2px 8px;border-radius:999px;margin-bottom:8px}
   /* 卡片 */
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);padding:16px;margin-bottom:12px}
-  .card h3{margin:0 0 8px;font-size:15px}
-  .card .meta{color:var(--text-muted);font-size:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);padding:14px;margin-bottom:10px;cursor:pointer}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .card .meta{color:var(--text-muted);font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .card .meta .sep{color:var(--border-strong)}
+  .card .price{font-weight:700;color:var(--brand-600);font-size:15px}
+  /* 占位 */
+  .empty{text-align:center;color:var(--text-sub);padding:48px 16px}
   /* 按钮 */
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 16px;border-radius:var(--radius);font-size:14px;cursor:pointer;width:100%;font-weight:500}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);padding:10px 16px;border-radius:var(--radius);font-size:14px;cursor:pointer;font-weight:500}
   .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
-  .btn.small{width:auto;padding:6px 12px;font-size:12px}
+  .btn.warn{background:var(--warn);color:#fff;border-color:var(--warn)}
+  .btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+  .btn.block{display:flex;width:100%}
+  .btn.small{padding:6px 12px;font-size:12px}
   /* 底部 tab */
   .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;height:56px;z-index:20}
   .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text-muted);cursor:pointer;font-size:11px;text-decoration:none}
   .tab .icon{font-size:18px}
   .tab.active{color:var(--brand)}
-  /* 输入 */
-  .input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:#fff}
+  /* 表单 */
+  .input,.select,.textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:#fff}
+  .textarea{resize:vertical;min-height:60px}
   .field{margin-bottom:12px}
   .field label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px}
   /* 状态徽章 */
-  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;background:#eef3ff;color:#4d7cff}
-  .badge.warn{background:#fff8e1;color:#b07b00}
-  .badge.danger{background:#fdeef0;color:#c43b30}
-  .badge.ok{background:#e8f8f0;color:#00a258}
+  .badge{display:inline-block;padding:2px 8px;border-radius:var(--radius-full);font-size:11px;background:var(--info-50);color:var(--info)}
+  .badge.PENDING_PAYMENT{background:#fff8e1;color:#b07b00}
+  .badge.PENDING_MATCH{background:#eef3ff;color:#4d7cff}
+  .badge.MATCHED{background:#eef3ff;color:#4d7cff}
+  .badge.PICKED_UP{background:#eef3ff;color:#4d7cff}
+  .badge.DELIVERING{background:#eef3ff;color:#4d7cff}
+  .badge.PENDING_CONFIRM{background:#fff8e1;color:#b07b00}
+  .badge.COMPLETED{background:#e8f8f0;color:#00a258}
+  .badge.CANCELLED{background:#fdeef0;color:#c43b30}
+  .badge.REFUNDED{background:#fdeef0;color:#c43b30}
+  /* 时间线 */
+  .timeline{margin:8px 0;padding-left:14px;border-left:2px solid var(--border)}
+  .timeline .step{font-size:12px;color:var(--text-muted);padding:4px 0}
+  .timeline .step b{color:var(--text)}
+  /* 金额 */
+  .amount{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .amount:last-child{border-bottom:none}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:13px;z-index:100;max-width:360px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="topbar" id="topbarTitle">校送</div>
+  <!-- 顶部栏 -->
+  <div class="topbar">
+    <div class="topbar-row">
+      <h1 id="topbarTitle">校送</h1>
+      <div class="role-switch" id="roleSwitch">
+        <span class="role-pill" data-role="customer" onclick="switchRole('customer')">顾客</span>
+        <span class="role-pill" data-role="picker" onclick="switchRole('picker')">帮取人</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-bar" id="subBar">未初始化</div>
 
   <!-- 首页 -->
   <section class="view active" id="view-home">
-    <div class="placeholder">
-      <span class="tag">TODO · 首页</span>
-      <div>附近订单 / 我的接单 / 推荐位</div>
-      <div style="margin-top:12px;font-size:12px">调 GET /api/orders 拉取可接订单列表</div>
-    </div>
-    <div style="margin-top:12px">
-      <button class="btn primary" onclick="location.hash='#/publish'">立即发单</button>
-    </div>
+    <div id="home-list"><div class="empty">加载中...</div></div>
   </section>
 
-  <!-- 订单 -->
+  <!-- 订单列表（我的） -->
   <section class="view" id="view-orders">
-    <div class="placeholder">
-      <span class="tag">TODO · 订单列表</span>
-      <div>我的发单 / 我的接单 / 全部</div>
-      <div style="margin-top:12px;font-size:12px">调 GET /api/orders 拉取</div>
-    </div>
+    <div id="orders-list"><div class="empty">加载中...</div></div>
   </section>
 
   <!-- 发单 -->
   <section class="view" id="view-publish">
-    <div class="card">
+    <div class="card" style="cursor:default">
       <h3>发布代取需求</h3>
-      <div class="field">
-        <label>类型</label>
-        <select class="input" id="f-type">
-          <option value="takeout">外卖</option>
-          <option value="parcel">包裹</option>
-        </select>
+      <div class="field"><label>类型</label>
+        <select class="select" id="f-type"><option value="food">外卖</option><option value="parcel">包裹</option><option value="other">其他</option></select>
       </div>
-      <div class="field">
-        <label>取货地点</label>
-        <input class="input" id="f-pickup" placeholder="例：东门外卖柜" />
-      </div>
-      <div class="field">
-        <label>送达地点</label>
-        <input class="input" id="f-deliver" placeholder="例：5 号楼 302" />
-      </div>
-      <div class="field">
-        <label>备注</label>
-        <input class="input" id="f-note" placeholder="选填" />
-      </div>
-      <button class="btn primary" onclick="createOrder()">提交订单（¥1.5）</button>
+      <div class="field"><label>取货地点</label><input class="input" id="f-pickup" placeholder="例：东门外卖柜" /></div>
+      <div class="field"><label>送达地点</label><input class="input" id="f-deliver" placeholder="例：5 号楼 302" /></div>
+      <div class="field"><label>备注</label><textarea class="textarea" id="f-note" placeholder="选填"></textarea></div>
+      <button class="btn primary block" onclick="createOrder()">提交订单（¥1.5）</button>
     </div>
   </section>
 
   <!-- 我的 -->
   <section class="view" id="view-me">
-    <div class="card">
-      <h3>我的</h3>
-      <div class="meta">身份：未登录</div>
-      <div class="meta">信誉分：—</div>
-      <div style="margin-top:12px">
-        <button class="btn small" onclick="location.hash='#/register'">注册 / 准入</button>
-      </div>
-    </div>
+    <div id="me-card"><div class="empty">加载中...</div></div>
   </section>
 
-  <!-- 注册 -->
-  <section class="view" id="view-register">
-    <div class="card">
-      <h3>注册（M1 准入）</h3>
-      <div class="field"><label>角色</label>
-        <select class="input" id="r-role"><option value="picker">帮取人</option><option value="customer">顾客</option></select>
-      </div>
-      <div class="field"><label>姓名</label><input class="input" id="r-name" /></div>
-      <div class="field"><label>学号</label><input class="input" id="r-sid" /></div>
-      <div class="field"><label>手机号</label><input class="input" id="r-phone" /></div>
-      <button class="btn primary" onclick="register()">注册</button>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">注册后流程：人脸核验 → 交保证金（¥50）→ 签到</div>
-    </div>
+  <!-- 订单详情 -->
+  <section class="view" id="view-detail">
+    <div id="detail-content"><div class="empty">加载中...</div></div>
   </section>
 
   <!-- 底部 tab -->
@@ -136,8 +134,10 @@
   </nav>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-/* ===== API 封装层（对接 CONTRACT.md 的 21 个端点）===== */
+/* ===== API 封装层 ===== */
 const API_BASE = '/api';
 async function call(method, path, body) {
   const opt = { method, headers: {'Content-Type':'application/json'} };
@@ -148,12 +148,10 @@ async function call(method, path, body) {
   return data.data;
 }
 const api = {
-  // M1 准入
   register: (b) => call('POST', '/users/register', b),
   verifyFace: (id) => call('POST', `/users/${id}/verify-face`),
   payDeposit: (id) => call('POST', `/users/${id}/pay-deposit`),
   checkin: (id) => call('POST', `/users/${id}/checkin`),
-  // M2 订单
   createOrder: (b) => call('POST', '/orders', b),
   payOrder: (id) => call('POST', `/orders/${id}/pay`),
   accept: (id) => call('POST', `/orders/${id}/accept`),
@@ -165,19 +163,81 @@ const api = {
   cancel: (id) => call('POST', `/orders/${id}/cancel`),
   getOrder: (id) => call('GET', `/orders/${id}`),
   listOrders: () => call('GET', '/orders'),
-  // M5 治理
+  getUser: (id) => call('GET', `/users/${id}`),
   getStats: () => call('GET', '/admin/stats'),
 };
 
-/* ===== 简易 hash 路由 ===== */
+/* ===== Toast ===== */
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+async function safe(fn, msg) {
+  try { return await fn(); } catch (e) { toast((msg||'操作失败') + '：' + e.message); }
+}
+
+/* ===== Demo 用户初始化（首次打开自动注册） =====
+   顾客：U-demo-c1（已签到）
+   帮取人：U-demo-p1（已交保证金 + 人脸核验 + 签到）
+   保证订单能直接走完整闭环。
+*/
+const STATE_KEY = 'campusPickupDemo';
+function loadState() { return JSON.parse(localStorage.getItem(STATE_KEY) || '{}'); }
+function saveState(s) { localStorage.setItem(STATE_KEY, JSON.stringify(s)); }
+
+async function initDemoUsers() {
+  const s = loadState();
+  // 校验已存用户是否还在 server 端（内存存储重启会清空）
+  if (s.customerId && s.pickerId) {
+    try {
+      await api.getUser(s.customerId);
+      await api.getUser(s.pickerId);
+      return s;
+    } catch (e) {
+      // 用户丢了，重新注册
+      localStorage.removeItem(STATE_KEY);
+    }
+  }
+  // 注册 customer
+  const c = await api.register({ role:'customer', name:'张三', studentId:'C001', phone:'13800000001' });
+  // 注册 picker
+  const p = await api.register({ role:'picker', name:'李四', studentId:'P001', phone:'13800000002' });
+  // picker 走准入：人脸 → 保证金 → 签到
+  await api.verifyFace(p.id);
+  await api.payDeposit(p.id);
+  await api.checkin(p.id);
+  const next = { customerId: c.id, pickerId: p.id, role: 'customer' };
+  saveState(next);
+  return next;
+}
+
+async function switchRole(role) {
+  const s = loadState();
+  s.role = role;
+  saveState(s);
+  renderRole();
+  await renderHome();
+  await renderMe();
+}
+
+function currentUserId() {
+  const s = loadState();
+  return s.role === 'picker' ? s.pickerId : s.customerId;
+}
+
+/* ===== 路由 ===== */
 const routes = {
   home: 'view-home', orders: 'view-orders', publish: 'view-publish',
-  me: 'view-me', register: 'view-register'
+  me: 'view-me', detail: 'view-detail'
 };
-const titles = { home:'校送', orders:'我的订单', publish:'发单', me:'我的', register:'注册' };
-function router() {
+const titles = { home:'校送', orders:'我的订单', publish:'发单', me:'我的', detail:'订单详情' };
+
+async function router() {
   const path = (location.hash || '#/home').slice(2);
-  const key = path.split('/')[0];
+  const parts = path.split('/');
+  const key = parts[0] || 'home';
   const view = routes[key] || routes.home;
   Object.values(routes).forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById(view).classList.add('active');
@@ -185,33 +245,277 @@ function router() {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const tab = document.querySelector(`.tab[href="#/${key}"]`);
   if (tab) tab.classList.add('active');
+
+  // 路由触发渲染
+  if (key === 'home') await renderHome();
+  if (key === 'orders') await renderOrders();
+  if (key === 'me') await renderMe();
+  if (key === 'detail' && parts[1]) await renderDetail(parts[1]);
 }
+
 window.addEventListener('hashchange', router);
 
-/* ===== 页面动作（骨架占位，调 API 后填 UI）===== */
-async function register() {
-  const body = {
-    role: document.getElementById('r-role').value,
-    name: document.getElementById('r-name').value,
-    studentId: document.getElementById('r-sid').value,
-    phone: document.getElementById('r-phone').value
-  };
-  try { const u = await api.register(body); alert('注册成功：' + JSON.stringify(u)); }
-  catch (e) { alert('失败：' + e.message); }
+/* ===== 渲染：顶部身份 ===== */
+function renderRole() {
+  const s = loadState();
+  document.querySelectorAll('.role-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.role === (s.role || 'customer'));
+  });
+  const uid = currentUserId();
+  document.getElementById('subBar').textContent = `当前身份：${s.role==='picker'?'帮取人':'顾客'} · ${uid || '未初始化'}`;
 }
+
+/* ===== 渲染：首页订单列表 =====
+   顾客视角：看我发的单（可取消/支付）
+   帮取人视角：看所有可接单（待接/已接）
+*/
+async function renderHome() {
+  const list = document.getElementById('home-list');
+  list.innerHTML = '<div class="empty">加载中...</div>';
+  const data = await safe(() => api.listOrders(), '拉取订单失败');
+  if (!data) return;
+  let orders = data.orders || data || [];
+  const s = loadState();
+  const uid = currentUserId();
+  // 角色过滤
+  if (s.role === 'customer') {
+    orders = orders.filter(o => o.customerId === uid);
+  } else {
+    // picker：显示待接单 + 自己已接的
+    orders = orders.filter(o => o.status === 'PENDING_ACCEPT' || o.pickerId === uid);
+  }
+  if (!orders.length) {
+    list.innerHTML = `<div class="empty">${s.role==='customer'?'还没发过单 → 点"发单"开始':'暂无可接订单'}</div>`;
+    return;
+  }
+  list.innerHTML = orders.map(o => orderCardHTML(o)).join('');
+  // 绑定点击
+  list.querySelectorAll('.card').forEach(c => {
+    c.onclick = () => location.hash = `#/detail/${c.dataset.id}`;
+  });
+}
+
+/* ===== 渲染：我的订单（全部状态）===== */
+async function renderOrders() {
+  const list = document.getElementById('orders-list');
+  list.innerHTML = '<div class="empty">加载中...</div>';
+  const data = await safe(() => api.listOrders(), '拉取订单失败');
+  if (!data) return;
+  let orders = data.orders || data || [];
+  const uid = currentUserId();
+  const s = loadState();
+  // 我的 = 我发的（顾客）或 我接的（帮取人）
+  orders = orders.filter(o =>
+    (s.role === 'customer' && o.customerId === uid) ||
+    (s.role === 'picker' && o.pickerId === uid)
+  );
+  if (!orders.length) {
+    list.innerHTML = '<div class="empty">暂无订单</div>';
+    return;
+  }
+  list.innerHTML = orders.map(o => orderCardHTML(o)).join('');
+  list.querySelectorAll('.card').forEach(c => {
+    c.onclick = () => location.hash = `#/detail/${c.dataset.id}`;
+  });
+}
+
+function orderCardHTML(o) {
+  const typeText = {food:'外卖', parcel:'包裹', other:'其他'}[o.type] || o.type;
+  return `
+    <div class="card" data-id="${o.id}">
+      <h3>[${typeText}] ${o.pickupLocation || '—'} → ${o.deliveryLocation || '—'}</h3>
+      <div class="meta">
+        <span class="badge ${o.status}">${statusText(o.status)}</span>
+        <span class="sep">·</span>
+        <span>${o.id}</span>
+        <span class="sep">·</span>
+        <span class="price">¥1.5</span>
+      </div>
+    </div>`;
+}
+
+function statusText(s) {
+  return {
+    PENDING_PAYMENT:'待支付', PENDING_MATCH:'待接单', MATCHED:'已接单',
+    PICKED_UP:'已取货', DELIVERING:'配送中', PENDING_CONFIRM:'待确认',
+    COMPLETED:'已完成', CANCELLED:'已取消', REFUNDED:'已退款'
+  }[s] || s;
+}
+
+/* ===== 渲染：订单详情（状态机驱动按钮）===== */
+async function renderDetail(id) {
+  const box = document.getElementById('detail-content');
+  box.innerHTML = '<div class="empty">加载中...</div>';
+  const o = await safe(() => api.getOrder(id), '拉取详情失败');
+  if (!o) return;
+  const s = loadState();
+  const isCustomer = s.role === 'customer' && o.customerId === currentUserId();
+  const isPicker = s.role === 'picker' && (!o.pickerId || o.pickerId === currentUserId());
+
+  const actions = [];
+  // 顾客视角
+  if (isCustomer) {
+    if (o.status === 'PENDING_PAYMENT') actions.push({label:'支付 ¥1.5', cls:'primary', fn:()=>doAction(id,'pay')});
+    if (['PENDING_PAYMENT','PENDING_MATCH'].includes(o.status)) actions.push({label:'取消订单', cls:'danger', fn:()=>doAction(id,'cancel')});
+    if (o.status === 'PENDING_CONFIRM') actions.push({label:'确认收货', cls:'primary', fn:()=>doAction(id,'confirm')});
+    if (o.status === 'COMPLETED' && !o.rating) actions.push({label:'好评 +0.5', cls:'primary', fn:()=>doRate(id,'good')});
+  }
+  // 帮取人视角
+  if (isPicker) {
+    if (o.status === 'PENDING_MATCH') actions.push({label:'接单', cls:'primary', fn:()=>doAction(id,'accept')});
+    if (o.status === 'MATCHED') actions.push({label:'已取货（上传凭证）', cls:'primary', fn:()=>doPickup(id)});
+    if (o.status === 'PICKED_UP') actions.push({label:'开始配送', cls:'primary', fn:()=>doAction(id,'deliver')});
+    if (o.status === 'DELIVERING') actions.push({label:'送达', cls:'primary', fn:()=>doAction(id,'arrive')});
+  }
+
+  // 时间线
+  const timeline = (o.timeline || []).map(t => `<div class="step"><b>${statusText(t.to)}</b> · ${new Date(t.at).toLocaleTimeString()}</div>`).join('');
+
+  box.innerHTML = `
+    <div class="card" style="cursor:default">
+      <h3>[${{food:'外卖',parcel:'包裹',other:'其他'}[o.type] || o.type}] ${o.pickupLocation || '—'} → ${o.deliveryLocation || '—'}</h3>
+      <div class="meta">
+        <span class="badge ${o.status}">${statusText(o.status)}</span>
+        <span class="sep">·</span><span>${o.id}</span>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--text-muted)">
+        ${o.note ? '备注：' + o.note : '无备注'}
+      </div>
+    </div>
+    <div class="card" style="cursor:default">
+      <h3 style="font-size:13px;color:var(--text-muted)">金额</h3>
+      <div class="amount"><span>订单金额</span><span>¥1.50</span></div>
+      <div class="amount"><span>帮取人</span><span>¥1.20</span></div>
+      <div class="amount"><span>平台</span><span>¥0.30</span></div>
+    </div>
+    ${timeline ? `<div class="card" style="cursor:default"><h3 style="font-size:13px;color:var(--text-muted)">流转时间线</h3><div class="timeline">${timeline}</div></div>` : ''}
+    ${actions.length ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${actions.map((a,i)=>`<button class="btn ${a.cls} block" onclick="window._act[${i}]()">${a.label}</button>`).join('')}</div>` : ''}
+    <div style="margin-top:12px"><button class="btn small" onclick="location.hash='#/home'">返回</button></div>
+  `;
+  // 把 actions 挂到全局
+  window._act = actions.map(a => a.fn);
+}
+
+async function doAction(id, action) {
+  const fnMap = {
+    pay: () => api.payOrder(id),
+    accept: () => api.accept(id),
+    deliver: () => api.deliver(id),
+    arrive: () => api.arrive(id),
+    confirm: () => api.confirm(id),
+    cancel: () => api.cancel(id),
+  };
+  await safe(async () => {
+    await fnMap[action]();
+    toast('操作成功');
+    await renderDetail(id);
+  }, '操作失败');
+}
+
+async function doPickup(id) {
+  // 演示用：直接 mock 一个取货凭证（pickupCode 空字符串匹配订单默认空值）
+  await safe(async () => {
+    await api.pickup(id, {
+      pickupPhoto: 'demo://pickup.jpg',
+      faceVerified: true,
+      pickupCode: ''
+    });
+    toast('已上传取货凭证');
+    await renderDetail(id);
+  }, '取货失败');
+}
+
+async function doRate(id, type) {
+  await safe(async () => {
+    // 后端契约：customerToPicker(1-5) + onTime(bool)；5=五星好评 +0.5，<=2 差评 -0.5，onTime +0.1
+    await api.rate(id, {
+      customerToPicker: type === 'good' ? 5 : 2,
+      onTime: true
+    });
+    toast('评价成功 +0.5 信誉分');
+    await renderDetail(id);
+  }, '评价失败');
+}
+
+/* ===== 渲染：我的 ===== */
+async function renderMe() {
+  const box = document.getElementById('me-card');
+  const uid = currentUserId();
+  if (!uid) { box.innerHTML = '<div class="empty">未初始化</div>'; return; }
+  const u = await safe(() => api.getUser(uid), '拉取用户失败');
+  if (!u) return;
+  const accessSteps = [];
+  if (u.faceVerified) accessSteps.push('人脸核验 ✓');
+  if (u.depositPaid) accessSteps.push('保证金 ¥50 ✓');
+  if (u.status === 'active') accessSteps.push('已签到 ✓');
+  box.innerHTML = `
+    <div class="card" style="cursor:default">
+      <h3>${u.name}</h3>
+      <div class="meta">
+        <span class="badge ${u.role==='picker'?'PENDING_ACCEPT':'CONFIRMED'}">${u.role==='picker'?'帮取人':'顾客'}</span>
+        <span class="sep">·</span><span>${u.studentId}</span>
+        <span class="sep">·</span><span>${u.phone}</span>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--text-muted)">用户 ID：${u.id}</div>
+    </div>
+    <div class="card" style="cursor:default">
+      <h3 style="font-size:13px;color:var(--text-muted)">信誉分</h3>
+      <div style="font-size:24px;font-weight:700;color:var(--brand-600)">${u.creditScore || 0}<span style="font-size:14px;color:var(--text-muted)"> / 10</span></div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:4px">${tierText(u.creditScore)}</div>
+    </div>
+    <div class="card" style="cursor:default">
+      <h3 style="font-size:13px;color:var(--text-muted)">准入状态</h3>
+      <div style="font-size:13px">${accessSteps.length ? accessSteps.join(' · ') : '未完成准入'}</div>
+      ${u.depositPaid ? `<div style="font-size:13px;color:var(--text-muted);margin-top:6px">保证金：¥${u.depositAmount}</div>` : ''}
+    </div>
+    <div style="margin-top:12px"><button class="btn block" onclick="resetDemo()">重置演示数据</button></div>
+  `;
+}
+
+function tierText(score) {
+  if (score >= 8) return '王者级 · +¥0.2/单 加成';
+  if (score >= 5) return '金牌级 · +¥0.1/单 加成';
+  if (score >= 2) return '白银级 · 标准佣金';
+  return '新手级 · 标准佣金';
+}
+
+async function resetDemo() {
+  localStorage.removeItem(STATE_KEY);
+  toast('已重置，重新初始化...');
+  setTimeout(() => location.reload(), 800);
+}
+
+/* ===== 发单 ===== */
 async function createOrder() {
   const body = {
     type: document.getElementById('f-type').value,
     pickupLocation: document.getElementById('f-pickup').value,
     deliveryLocation: document.getElementById('f-deliver').value,
     note: document.getElementById('f-note').value,
-    customerId: 'TODO' // TODO：从登录态拿
+    customerId: currentUserId()
   };
-  try { const o = await api.createOrder(body); alert('发单成功：' + JSON.stringify(o)); location.hash='#/orders'; }
-  catch (e) { alert('失败：' + e.message); }
+  await safe(async () => {
+    const o = await api.createOrder(body);
+    toast('发单成功，订单 ' + o.id);
+    document.getElementById('f-pickup').value = '';
+    document.getElementById('f-deliver').value = '';
+    document.getElementById('f-note').value = '';
+    location.hash = '#/detail/' + o.id;
+  }, '发单失败');
 }
 
-router();
+/* ===== 启动 ===== */
+async function boot() {
+  try {
+    await initDemoUsers();
+  } catch (e) {
+    document.getElementById('subBar').textContent = '初始化失败：' + e.message;
+    return;
+  }
+  renderRole();
+  await router();
+}
+boot();
 </script>
 </body>
 </html>

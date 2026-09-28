@@ -24,7 +24,8 @@ export function checkBeforePickup(orderId, pickerId, input = {}) {
   const picker = getUser(pickerId)
 
   const checks = {
-    pickupCodeMatch: !!input.pickupCode && input.pickupCode === order.pickupCode,
+    // 订单未设取件码（空字符串）→ 视为无需取件码，直接通过；否则要求严格匹配
+    pickupCodeMatch: !order.pickupCode || input.pickupCode === order.pickupCode,
     inCampus: isOnCampus(order.deliveryLocation),
     pickerReady: isPickerReady(pickerId),
   }
