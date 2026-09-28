@@ -42,11 +42,12 @@ export function getOrder(id) {
 }
 
 /**
- * 查重：学号或手机号是否已注册（契约 1.1 校验用）
+ * 查重：校园邮箱或手机号是否已注册（契约 1.1 校验用）
+ * 注：原 findByStudentIdOrPhone 已弃用，改用 campusEmail 作为主身份字段
  */
-export function findByStudentIdOrPhone(studentId, phone) {
+export function findByCampusEmailOrPhone(campusEmail, phone) {
   for (const u of users.values()) {
-    if (studentId && u.studentId === studentId) return u
+    if (campusEmail && u.campusEmail === campusEmail) return u
     if (phone && u.phone === phone) return u
   }
   return null
