@@ -1,5 +1,5 @@
 ---
-name: "token-budget-orchestrator"
+name: "token预算编排器"
 description: "Solves a task within a given token/cost budget by self-allocating budget across steps. Invoke when the user gives a budget plus a goal and wants the agent to decide how much to spend where."
 ---
 
